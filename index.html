@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Elec App2</title>
+
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #f3f4f6;
+    margin: 0;
+    padding: 20px;
+  }
+
+  h2 {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    max-width: 800px;
+    margin: auto;
+  }
+
+  .card {
+    background: white;
+    border-radius: 14px;
+    padding: 20px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+    text-align: center;
+  }
+
+  .label {
+    font-size: 0.9rem;
+    color: #6b7280;
+  }
+
+  .value {
+    font-size: 2.2rem;
+    margin-top: 8px;
+    font-weight: bold;
+  }
+
+  .unit {
+    font-size: 0.9rem;
+    color: #9ca3af;
+  }
+
+  .controls {
+    max-width: 800px;
+    margin: 20px auto 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+  }
+
+  button {
+    padding: 16px;
+    font-size: 1.1rem;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+  }
+
+  .on {
+    background: #22c55e;
+    color: white;
+  }
+
+  .off {
+    background: #ef4444;
+    color: white;
+  }
+
+  footer {
+    text-align: center;
+    margin-top: 15px;
+    font-size: 0.8rem;
+    color: #9ca3af;
+  }
+</style>
+</head>
+
+<body>
+
+<h2>🌱 Indoor Air Quality Monitoring and Control System</h2>
+
+<div class="grid">
+  <div class="card">
+    <div class="label">Temperature</div>
+    <div class="value"><span id="t">--</span></div>
+    <div class="unit">°C</div>
+  </div>
+
+  <div class="card">
+    <div class="label">Humidity</div>
+    <div class="value"><span id="h">--</span></div>
+    <div class="unit">%</div>
+  </div>
+
+  <div class="card">
+    <div class="label">Dust (PM)</div>
+    <div class="value"><span id="d">--</span></div>
+    <div class="unit">µg/m³</div>
+  </div>
+</div>
+
+<div class="controls">
+  <button class="on" onclick="fan(true)">🌀 Fan ON</button>
+  <button class="off" onclick="fan(false)">🛑 Fan OFF</button>
+</div>
+
+<footer>
+  Auto refresh every 3 seconds
+</footer>
+
+<script>
+const ESP32 = "http://172.20.10.2";
+
+async function load(){
+  try {
+    console.log("function loop started")
+
+    const r = await fetch(`${ESP32}/latest`);
+    const s = await r.json();
+
+    t.innerText = s.temp.toFixed(1);
+    h.innerText = s.humidity.toFixed(1);
+    d.innerText = s.dust.toFixed(1);
+  } catch (e) {
+    t.innerText = h.innerText = d.innerText = "--";
+  }
+}
+
+function fan(state){
+  fetch(`${ESP32}/control`,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({ fan: state })
+  });
+}
+
+setInterval(load, 3100);
+load();
+</script>
+
+</body>
+</html>
