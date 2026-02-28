@@ -1,310 +1,255 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
-<title>Indoor Air Control Pro+</title>
+<title>Indoor Air Pro</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 <style>
 body{
-  font-family:Arial,sans-serif;
-  background:#f3f4f6;
   margin:0;
+  font-family:system-ui;
+  background:#f1f5f9;
+}
+
+h1{
+  text-align:center;
+  margin:20px 0;
+  font-size:1.8rem;
+}
+
+.container{
+  max-width:1100px;
+  margin:auto;
   padding:20px;
 }
-h2{text-align:center;}
 
-.grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-  gap:16px;
-  max-width:1000px;
-  margin:auto;
+.top{
+  display:flex;
+  flex-wrap:wrap;
+  gap:20px;
+  justify-content:center;
 }
 
 .card{
   background:white;
-  border-radius:18px;
+  border-radius:24px;
   padding:20px;
-  box-shadow:0 10px 25px rgba(0,0,0,0.08);
+  box-shadow:0 15px 35px rgba(0,0,0,0.07);
   text-align:center;
+  flex:1;
+  min-width:240px;
 }
 
 .value{
-  font-size:2.2rem;
+  font-size:2.5rem;
   font-weight:bold;
 }
 
 .status{
-  margin-top:10px;
-  font-size:0.9rem;
+  margin-top:8px;
   font-weight:bold;
 }
 
-.status-on{ color:#22c55e; }
-.status-off{ color:#ef4444; }
-
-.mode-row{
-  max-width:1000px;
-  margin:10px auto;
-  display:flex;
-  justify-content:flex-end;
-  align-items:center;
-}
-
-.switch{
-  position:relative;
-  display:inline-block;
-  width:60px;
-  height:30px;
-}
-.switch input{
-  opacity:0;width:0;height:0;
-}
-
-.slider{
-  position:absolute;
-  cursor:pointer;
-  top:0;left:0;right:0;bottom:0;
-  background:#ef4444;
-  transition:.4s;
-  border-radius:34px;
-}
-.slider:before{
-  position:absolute;
-  content:"";
-  height:22px;width:22px;
-  left:4px;bottom:4px;
-  background:white;
-  transition:.4s;
-  border-radius:50%;
-}
-
-input:checked + .slider{ background:#22c55e; }
-input:checked + .slider:before{ transform:translateX(28px); }
-
-.mode-label{ margin-right:10px;font-weight:bold; }
-
-.controls{
-  max-width:1000px;
-  margin:20px auto;
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
-  gap:15px;
-}
+.on{color:#16a34a;}
+.off{color:#dc2626;}
 
 button{
-  padding:14px;
+  padding:12px 20px;
   border:none;
   border-radius:14px;
-  font-size:1rem;
+  font-weight:bold;
   cursor:pointer;
-  transition:0.2s;
+  margin-top:10px;
+  transition:.2s;
 }
-button:hover{ transform:scale(1.05); }
+button:hover{transform:scale(1.05)}
 
-.on{ background:#22c55e;color:white;}
-.off{ background:#ef4444;color:white;}
+.btn-green{background:#16a34a;color:white;}
+.btn-red{background:#dc2626;color:white;}
+.btn-blue{background:#2563eb;color:white;}
 
-.selector{
-  display:flex;
-  justify-content:center;
-  gap:10px;
-  margin:10px 0;
-}
-
-.selector button{
-  background:#e5e7eb;
-  border:none;
-  padding:8px 14px;
-  border-radius:10px;
-  cursor:pointer;
+.fan-icon{
+  font-size:3rem;
+  display:inline-block;
 }
 
-.selector button.active{
-  background:#2563eb;
-  color:white;
+.spin{
+  animation:spin 1s linear infinite;
 }
 
-footer{
-  text-align:center;
-  font-size:0.8rem;
-  color:#9ca3af;
+@keyframes spin{
+  from{transform:rotate(0deg)}
+  to{transform:rotate(360deg)}
+}
+
+.gauge{
+  width:180px;
+  height:180px;
+  margin:auto;
+}
+
+canvas{
+  margin-top:20px;
+}
+
+@media(max-width:768px){
+  .top{flex-direction:column;}
 }
 </style>
 </head>
-
 <body>
 
-<h2>🌱 Indoor Air Quality Monitoring System</h2>
+<h1>🌱 Indoor Air Monitoring System</h1>
 
-<div class="mode-row">
-  <span class="mode-label" id="modeText">AUTO</span>
-  <label class="switch">
-    <input type="checkbox" id="modeToggle">
-    <span class="slider"></span>
-  </label>
+<div class="container">
+
+<div class="top">
+
+<div class="card">
+  <h3>Temperature</h3>
+  <div class="value"><span id="t">--</span>°C</div>
 </div>
 
-<div class="grid">
-  <div class="card">
-    <div>Temperature</div>
-    <div class="value"><span id="t">--</span> °C</div>
-  </div>
-
-  <div class="card">
-    <div>Humidity</div>
-    <div class="value"><span id="h">--</span> %</div>
-  </div>
-
-  <div class="card" id="dustCard">
-    <div>Dust (PM)</div>
-    <div class="value"><span id="d">--</span> µg/m³</div>
-  </div>
-
-  <div class="card">
-    <div>Fan Status</div>
-    <div class="status" id="fanStatus">--</div>
-  </div>
-
-  <div class="card">
-    <div>Humidifier Status</div>
-    <div class="status" id="humStatus">--</div>
-  </div>
+<div class="card">
+  <h3>Humidity</h3>
+  <div class="value"><span id="h">--</span>%</div>
 </div>
 
-<div class="controls">
-  <button id="fanBtn" class="off">Toggle Fan</button>
-  <button id="humBtn" class="off">Toggle Humidifier</button>
+<div class="card">
+  <h3>Dust Level</h3>
+  <canvas id="gauge" class="gauge"></canvas>
+  <div class="value"><span id="d">--</span></div>
 </div>
 
-<div class="card" style="max-width:1000px;margin:20px auto;">
-  <div class="selector">
-    <button data-range="minute" class="active">Minute Avg</button>
-    <button data-range="hour">Hour Avg</button>
-    <button data-range="day">Day Avg</button>
-  </div>
+<div class="card">
+  <h3>Fan</h3>
+  <div class="fan-icon" id="fanIcon">🌀</div>
+  <div class="status off" id="fanStatus">OFF</div>
+  <button id="fanBtn" class="btn-red">Toggle</button>
+</div>
+
+<div class="card">
+  <h3>Humidifier</h3>
+  <div style="font-size:3rem;">💧</div>
+  <div class="status off" id="humStatus">OFF</div>
+  <button id="humBtn" class="btn-red">Toggle</button>
+</div>
+
+</div>
+
+<div class="card">
+  <h3>History (Dust)</h3>
   <canvas id="chart"></canvas>
 </div>
 
-<footer>7-Day Historical Data</footer>
+</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
 import { getDatabase, ref, onValue, update, get } 
 from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyBtBC7BkOHnDezC-0U6rygYgunr3lTrnGg",
-  authDomain: "air-monitor-f064a.firebaseapp.com",
-  databaseURL: "https://air-monitor-f064a-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "air-monitor-f064a",
-  storageBucket: "air-monitor-f064a.firebasestorage.app",
-  messagingSenderId: "817370230381",
-  appId: "1:817370230381:web:3357198d9f4f90c7069964"
+const firebaseConfig={
+  apiKey:"YOUR_API_KEY",
+  authDomain:"air-monitor-f064a.firebaseapp.com",
+  databaseURL:"https://air-monitor-f064a-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"air-monitor-f064a"
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
+const app=initializeApp(firebaseConfig);
+const db=getDatabase(app);
 
-let autoMode=true;
 let fanState=false;
 let humState=false;
 
-const ctx=document.getElementById('chart').getContext('2d');
-const chart=new Chart(ctx,{
-  type:'line',
-  data:{labels:[],datasets:[
-    {label:'Dust',data:[],borderColor:'#ef4444',tension:0.3},
-    {label:'Temp',data:[],borderColor:'#3b82f6',tension:0.3}
-  ]},
-  options:{responsive:true}
+/* --------- Gauge --------- */
+const gauge=new Chart(document.getElementById("gauge"),{
+  type:'doughnut',
+  data:{
+    labels:['Dust','Remain'],
+    datasets:[{
+      data:[0,200],
+      backgroundColor:['#16a34a','#e5e7eb'],
+      borderWidth:0
+    }]
+  },
+  options:{
+    rotation:-90,
+    circumference:180,
+    plugins:{legend:{display:false}},
+    cutout:'70%'
+  }
 });
 
-/* ---------- LIVE SENSOR ---------- */
-onValue(ref(db,"sensor"), snap=>{
+/* --------- Line Chart --------- */
+const chart=new Chart(document.getElementById("chart"),{
+  type:'line',
+  data:{labels:[],datasets:[{
+    label:'Dust',
+    data:[],
+    borderColor:'#dc2626',
+    tension:.4
+  }]}
+});
+
+/* --------- Live Sensor --------- */
+onValue(ref(db,"sensor"),snap=>{
   const s=snap.val();
   if(!s) return;
 
-  t.innerText=s.temp ?? "--";
-  h.innerText=s.humidity ?? "--";
-  d.innerText=s.dust ?? "--";
+  t.innerText=s.temp;
+  h.innerText=s.humidity;
+  d.innerText=s.dust;
 
-  if(s.dust<50) dustCard.style.background="#dcfce7";
-  else if(s.dust<150) dustCard.style.background="#fef9c3";
-  else dustCard.style.background="#fee2e2";
+  let color="#16a34a";
+  if(s.dust>50) color="#f59e0b";
+  if(s.dust>150) color="#dc2626";
+
+  gauge.data.datasets[0].data=[s.dust,200-s.dust];
+  gauge.data.datasets[0].backgroundColor=[color,'#e5e7eb'];
+  gauge.update();
 });
 
-/* ---------- CONTROL STATUS ---------- */
-onValue(ref(db,"control"), snap=>{
+/* --------- Control --------- */
+onValue(ref(db,"control"),snap=>{
   const c=snap.val();
   if(!c) return;
 
-  autoMode=c.auto;
   fanState=c.fan;
   humState=c.humidifier;
 
-  modeToggle.checked=autoMode;
-  modeText.innerText=autoMode?"AUTO":"MANUAL";
-
-  updateStatus("fanStatus",fanState);
-  updateStatus("humStatus",humState);
-
-  fanBtn.className=fanState?"on":"off";
-  humBtn.className=humState?"on":"off";
-
-  fanBtn.disabled=autoMode;
-  humBtn.disabled=autoMode;
+  updateDevice("fanStatus","fanIcon",fanState);
+  updateDevice("humStatus",null,humState);
 });
 
-/* ---------- FUNCTIONS ---------- */
-function updateStatus(id,state){
-  const el=document.getElementById(id);
-  if(state){
-    el.innerText="ON";
-    el.className="status status-on";
-  }else{
-    el.innerText="OFF";
-    el.className="status status-off";
+function updateDevice(statusId,iconId,state){
+  const s=document.getElementById(statusId);
+  s.innerText=state?"ON":"OFF";
+  s.className="status "+(state?"on":"off");
+
+  if(iconId){
+    const icon=document.getElementById(iconId);
+    state?icon.classList.add("spin"):icon.classList.remove("spin");
   }
 }
 
-fanBtn.onclick=()=>{
-  update(ref(db,"control"),{fan:!fanState});
-};
+/* --------- Buttons --------- */
+fanBtn.onclick=()=>update(ref(db,"control"),{fan:!fanState});
+humBtn.onclick=()=>update(ref(db,"control"),{humidifier:!humState});
 
-humBtn.onclick=()=>{
-  update(ref(db,"control"),{humidifier:!humState});
-};
-
-modeToggle.onchange=(e)=>{
-  update(ref(db,"control"),{auto:e.target.checked});
-};
-
-/* ---------- HISTORY ---------- */
-document.querySelectorAll(".selector button")
-.forEach(btn=>{
-  btn.onclick=()=>loadHistory(btn.dataset.range,btn);
-});
-
-async function loadHistory(range,btn){
-  document.querySelectorAll('.selector button')
-    .forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-
-  const snap=await get(ref(db,"history/"+range));
+/* --------- History --------- */
+async function loadHistory(){
+  const snap=await get(ref(db,"history/minute"));
   const data=snap.val();
   if(!data) return;
 
   const arr=Object.values(data);
-
   chart.data.labels=arr.map(x=>x.time);
   chart.data.datasets[0].data=arr.map(x=>x.dust);
-  chart.data.datasets[1].data=arr.map(x=>x.temp);
   chart.update();
 }
 
-loadHistory("minute",document.querySelector(".selector button"));
+loadHistory();
 
 </script>
 
