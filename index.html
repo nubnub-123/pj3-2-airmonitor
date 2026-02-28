@@ -1,150 +1,158 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
-<title>Elec App2</title>
-
+<title>Air Monitor</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
-  body {
-    font-family: Arial, sans-serif;
-    background: #f3f4f6;
-    margin: 0;
-    padding: 20px;
-  }
+body{
+  font-family:Arial;
+  background:#0f172a;
+  color:white;
+  text-align:center;
+}
+.card{
+  background:#1e293b;
+  padding:20px;
+  margin:15px;
+  border-radius:15px;
+}
+button{
+  padding:12px 25px;
+  margin:10px;
+  border:none;
+  border-radius:30px;
+  font-size:16px;
+  cursor:pointer;
+  position:relative;
+  overflow:hidden;
+}
+button:disabled{
+  opacity:0.5;
+  cursor:not-allowed;
+}
+.auto{ background:#22c55e; color:white; }
+.manual{ background:#3b82f6; color:white; }
+.off{ background:#475569; color:white; }
 
-  h2 {
-    text-align: center;
-    margin-bottom: 20px;
-  }
+.spin{
+  animation:spin 1s linear infinite;
+}
+@keyframes spin{
+  from{transform:rotate(0deg);}
+  to{transform:rotate(360deg);}
+}
 
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 16px;
-    max-width: 800px;
-    margin: auto;
-  }
+.toast{
+  position:fixed;
+  bottom:20px;
+  left:50%;
+  transform:translateX(-50%);
+  background:#22c55e;
+  padding:10px 20px;
+  border-radius:20px;
+  display:none;
+}
 
-  .card {
-    background: white;
-    border-radius: 14px;
-    padding: 20px;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
-    text-align: center;
-  }
-
-  .label {
-    font-size: 0.9rem;
-    color: #6b7280;
-  }
-
-  .value {
-    font-size: 2.2rem;
-    margin-top: 8px;
-    font-weight: bold;
-  }
-
-  .unit {
-    font-size: 0.9rem;
-    color: #9ca3af;
-  }
-
-  .controls {
-    max-width: 800px;
-    margin: 20px auto 0;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 16px;
-  }
-
-  button {
-    padding: 16px;
-    font-size: 1.1rem;
-    border-radius: 12px;
-    border: none;
-    cursor: pointer;
-  }
-
-  .on {
-    background: #22c55e;
-    color: white;
-  }
-
-  .off {
-    background: #ef4444;
-    color: white;
-  }
-
-  footer {
-    text-align: center;
-    margin-top: 15px;
-    font-size: 0.8rem;
-    color: #9ca3af;
-  }
 </style>
 </head>
-
 <body>
 
-<h2>🌱 Indoor Air Quality Monitoring and Control System</h2>
+<h1>🌫 Air Monitor</h1>
 
-<div class="grid">
-  <div class="card">
-    <div class="label">Temperature</div>
-    <div class="value"><span id="t">--</span></div>
-    <div class="unit">°C</div>
-  </div>
-
-  <div class="card">
-    <div class="label">Humidity</div>
-    <div class="value"><span id="h">--</span></div>
-    <div class="unit">%</div>
-  </div>
-
-  <div class="card">
-    <div class="label">Dust (PM)</div>
-    <div class="value"><span id="d">--</span></div>
-    <div class="unit">µg/m³</div>
-  </div>
+<div class="card">
+  <h2>PM2.5: <span id="pm25">--</span> µg/m³</h2>
+  <h3>Temp: <span id="temp">--</span> °C</h3>
+  <h3>Humidity: <span id="humidity">--</span> %</h3>
 </div>
 
-<div class="controls">
-  <button class="on" onclick="fan(true)">🌀 Fan ON</button>
-  <button class="off" onclick="fan(false)">🛑 Fan OFF</button>
+<div class="card">
+  <button id="modeBtn" class="auto">AUTO</button>
+  <br>
+  <button id="fanBtn" class="off">🌀 Fan OFF</button>
+  <button id="humBtn" class="off">💧 Humidifier OFF</button>
 </div>
 
-<footer>
-  Auto refresh every 3 seconds
-</footer>
+<div class="toast" id="toast">Success</div>
 
-<script>
-const ESP32 = "http://172.20.10.2";
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
 
-async function load(){
-  try {
-    console.log("function loop started")
+const firebaseConfig = {
+  apiKey: "AIzaSyBtBC7BkOHnDezC-0U6rygYgunr3lTrnGg",
+  authDomain: "air-monitor-f064a.firebaseapp.com",
+  databaseURL: "https://air-monitor-f064a-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "air-monitor-f064a",
+  storageBucket: "air-monitor-f064a.firebasestorage.app",
+  messagingSenderId: "817370230381",
+  appId: "1:817370230381:web:3357198d9f4f90c7069964"
+};
 
-    const r = await fetch(`${ESP32}/latest`);
-    const s = await r.json();
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
 
-    t.innerText = s.temp.toFixed(1);
-    h.innerText = s.humidity.toFixed(1);
-    d.innerText = s.dust.toFixed(1);
-  } catch (e) {
-    t.innerText = h.innerText = d.innerText = "--";
-  }
+const pm25El = document.getElementById("pm25");
+const tempEl = document.getElementById("temp");
+const humEl = document.getElementById("humidity");
+
+const modeBtn = document.getElementById("modeBtn");
+const fanBtn = document.getElementById("fanBtn");
+const humBtn = document.getElementById("humBtn");
+const toast = document.getElementById("toast");
+
+function showToast(msg){
+  toast.innerText = msg;
+  toast.style.display="block";
+  setTimeout(()=>toast.style.display="none",2000);
 }
 
-function fan(state){
-  fetch(`${ESP32}/control`,{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({ fan: state })
+onValue(ref(db,"/"), snapshot=>{
+  const data = snapshot.val();
+  if(!data) return;
+
+  pm25El.innerText = data.sensor?.pm25 ?? "--";
+  tempEl.innerText = data.sensor?.temp ?? "--";
+  humEl.innerText = data.sensor?.humidity ?? "--";
+
+  const mode = data.control?.mode ?? "AUTO";
+  const fan = data.control?.fan ?? false;
+  const humid = data.control?.humidifier ?? false;
+
+  modeBtn.innerText = mode;
+  modeBtn.className = mode==="AUTO" ? "auto" : "manual";
+
+  fanBtn.disabled = mode==="AUTO";
+  humBtn.disabled = mode==="AUTO";
+
+  fanBtn.innerHTML = fan ? "🌀 <span class='spin'>Fan ON</span>" : "🌀 Fan OFF";
+  humBtn.innerText = humid ? "💧 Humidifier ON" : "💧 Humidifier OFF";
+
+  fanBtn.className = fan ? "manual" : "off";
+  humBtn.className = humid ? "manual" : "off";
+});
+
+modeBtn.onclick = ()=>{
+  update(ref(db,"control"),{
+    mode: modeBtn.innerText==="AUTO"?"MANUAL":"AUTO"
   });
-}
+  showToast("Mode Updated");
+};
 
-setInterval(load, 3100);
-load();
+fanBtn.onclick = ()=>{
+  update(ref(db,"control"),{
+    fan: !fanBtn.innerText.includes("ON")
+  });
+  showToast("Fan Updated");
+};
+
+humBtn.onclick = ()=>{
+  update(ref(db,"control"),{
+    humidifier: !humBtn.innerText.includes("ON")
+  });
+  showToast("Humidifier Updated");
+};
+
 </script>
 
 </body>
